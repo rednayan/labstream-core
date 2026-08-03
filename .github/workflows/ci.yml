@@ -23,8 +23,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --workspace --all-targets
+      # `--no-fail-fast` runs every test binary. Without it cargo stops at the
+      # first binary that fails, and one run reports one failure. A platform
+      # with several differences then needs one run for each of them.
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --no-fail-fast
 
   msrv:
     name: Minimum supported Rust version
