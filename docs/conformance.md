@@ -94,29 +94,42 @@ The refusal is measured. An inlet that asks for 1.00 gets a clear refusal.
 The workflow in `.github/workflows/ci.yml` builds and tests on three
 platforms. The three results are not the same.
 
-| Platform | Builds | Tests |
-|---|---|---|
-| Linux | yes | 226 pass |
-| macOS | yes | 225 pass, 1 fails |
-| Windows | no | not run |
+| Platform | Builds | Tests | Compared against liblsl |
+|---|---|---|---|
+| Linux | yes | 231 pass | yes |
+| macOS | yes | 230 pass, 1 fails | no |
+| Windows | yes | 230 pass, 1 is intermittent | no |
 
-On macOS the test `both_outlets_hold_the_multicast_port` fails. A second outlet
-in one program does not hold the multicast port. Another machine then sees one
-of the two streams and not both.
+Only Linux carries a measurement. The other two platforms run the tests of
+this repository and nothing more. A test here comes from a reading of the C++
+source, and this page gives four defects that such a test did not catch.
+
+### macOS
+
+`both_outlets_hold_the_multicast_port` fails. A second outlet in one program
+does not hold the multicast port. Another machine then sees one of the two
+streams and not both.
 
 `SO_REUSEADDR` lets two sockets share a wildcard port on Linux. BSD needs
 `SO_REUSEPORT` for the same result. liblsl sets only `reuse_address`
 (`src/udp_server.cpp:60`), and no measurement says what liblsl itself does on
-macOS. Do not change the socket option before a measurement answers that.
+macOS. Do not change the socket option before a measurement answers that
+question. liblsl can hold the same difference, and then the answer is to match
+it and not to correct it.
 
-On Windows `labstream-net` does not build. `clock()` calls `clock_gettime`, and
-the `libc` crate does not give that function on Windows.
+### Windows
 
-A build correction alone is not sufficient there. The fallback clock measures
-from the start of the process. liblsl measures from the start of the machine.
-A Windows build therefore needs a clock that reads the same origin.
+`clock()` reads the performance counter, which is what MSVC gives
+`steady_clock` and therefore what liblsl reads (`src/common.cpp:20`). The
+arithmetic has its own tests, and every platform runs them.
 
-Use Linux for a measured result.
+`no_stage_leaves_a_timestamp_alone` passes in one run and fails in the next.
+It waits five seconds for one sample over loopback. A run that fails reports no
+sample, and not a wrong one, so the evidence points at the time limit and not
+at the protocol. `an_outlet_reports_a_port_for_each_protocol` failed once in
+the same way, and it reported one port number for both families.
+
+No measurement covers Windows. Use Linux for a measured result.
 
 ## What is not measured
 

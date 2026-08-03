@@ -5,18 +5,32 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Windows support in `labstream-net`. `clock()` reads the performance counter,
+  which is the clock that MSVC gives `steady_clock` and that liblsl reads. The
+  crate did not build on Windows before this.
+- `counter_seconds` and five tests of it. Every platform runs the tests, so the
+  arithmetic of the Windows clock has a check on Linux as well.
+- `.gitattributes`. Git on Windows changed a line ending on checkout, and six
+  tests that compare against recorded output of liblsl failed there.
+
 ### Changed
 
 - `docs/conformance.md` gives the result for each platform. Version 0.1.0 said
   that the library builds and the tests pass on macOS and Windows. That
-  statement was wrong. Windows does not build, and macOS fails one test.
+  statement was wrong.
+- CI runs `cargo test --no-fail-fast`. One run now reports every failure.
+- `libc` is a dependency of Unix alone.
 
 ### Known limitations
 
-- Windows: `labstream-net` does not build. `clock()` calls `clock_gettime`,
-  which the `libc` crate does not give on Windows.
 - macOS: a second outlet does not hold the multicast port. Another machine sees
-  one of two streams from one program, and not both.
+  one of two streams from one program, and not both. `docs/conformance.md`
+  gives what a correction needs.
+- Windows: one live test passes in one run and fails in the next. It waits five
+  seconds for a sample over loopback.
+- No measurement compares this library against liblsl on macOS or Windows.
 
 ## [0.1.0] - 2026-08-03
 

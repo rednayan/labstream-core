@@ -131,8 +131,9 @@ cargo test --workspace
 The tests need no network hardware and no C++ toolchain. The tests of `labstream-net`
 bind loopback sockets. All 226 tests run in about 10 seconds.
 
-Those numbers come from Linux. macOS fails one test, and Windows does not build
-yet. `docs/conformance.md` gives the result for each platform.
+Those numbers come from Linux, which is the platform that carries a
+measurement. macOS and Windows each hold one open test.
+`docs/conformance.md` gives the result for each platform.
 
 ## Protocol 1.00
 
