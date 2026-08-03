@@ -117,6 +117,20 @@ macOS. Do not change the socket option before a measurement answers that
 question. liblsl can hold the same difference, and then the answer is to match
 it and not to correct it.
 
+This question stays open. No maintainer has a Mac, so no measurement can
+answer it now.
+
+A person with a Mac can answer it. Build liblsl on that machine, and run one
+program that opens two outlets. Then send a multicast query from a second
+machine on the same network. Count the streams that answer:
+
+- Two streams answer. liblsl holds the port for both outlets, and this library
+  must do the same. `SO_REUSEPORT` is then the correction.
+- One stream answers. liblsl holds the same difference, and this library
+  already matches it. The test is then wrong, not the library.
+
+Report the count in an issue. That number decides the change.
+
 ### Windows
 
 `clock()` reads the performance counter, which is what MSVC gives
