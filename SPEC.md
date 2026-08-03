@@ -1,6 +1,6 @@
 # The LSL wire protocol
 
-**Status:** version 1. Released with lsl-rustlang 0.1.0.
+**Status:** version 1. Released with labstream-core 0.1.0.
 **Oracle:** `sccn/liblsl` at `e651023ca67996a05a028fd88a28603297120294`.
 **Date:** 2026-08-02.
 
@@ -1238,7 +1238,7 @@ These items stay open. Each one needs a source read, a capture, or both.
 4. **The comment-before-colon input.** Section 4.3 describes a parser path with
    no test. M3 recorded a transcript with a trailing comment, which liblsl reads
    correctly. A comment that removes the colon stays untested, because the
-   oracle reads past the end of its own buffer there. `lsl-proto` refuses that
+   oracle reads past the end of its own buffer there. `labstream-proto` refuses that
    input instead.
 5. **IPv6.** Every capture used IPv4. The short description carries `v6` fields.
 6. ~~**`LSL:fullinfo`.**~~ **Closed.** The answer is the whole document, and the

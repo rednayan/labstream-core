@@ -37,8 +37,8 @@ against real liblsl can. The conformance workbench is a separate repository
 that holds the C++ library, the comparison tools, and the recorded
 measurements.
 
-If you change `lsl-wire`, `lsl-proto`, `lsl-time`, or the protocol parts of
-`lsl-net`, ask for a conformance run in the pull request. A maintainer runs the
+If you change `labstream-wire`, `labstream-proto`, `labstream-time`, or the protocol parts of
+`labstream-net`, ask for a conformance run in the pull request. A maintainer runs the
 workbench against your branch and reports the result.
 
 If you change documentation, an example, or an internal detail with no protocol
@@ -50,18 +50,18 @@ Each crate has one job. Keep the boundaries:
 
 | Crate | Rule |
 |---|---|
-| `lsl-wire` | no input and no output. Bytes in, bytes out |
-| `lsl-proto` | no input and no output. Bytes and events in, decisions out |
-| `lsl-time` | no input and no output. Numbers in, numbers out |
-| `lsl-net` | the only crate that opens a socket or reads a clock |
-| `lsl-capi` | the only crate that holds a raw pointer |
+| `labstream-wire` | no input and no output. Bytes in, bytes out |
+| `labstream-proto` | no input and no output. Bytes and events in, decisions out |
+| `labstream-time` | no input and no output. Numbers in, numbers out |
+| `labstream-net` | the only crate that opens a socket or reads a clock |
+| `labstream-capi` | the only crate that holds a raw pointer |
 
-Do not add a socket to `lsl-wire`, `lsl-proto`, or `lsl-time`. The split is
+Do not add a socket to `labstream-wire`, `labstream-proto`, or `labstream-time`. The split is
 what makes a protocol rule testable with a byte slice.
 
-`lsl-wire`, `lsl-proto`, and `lsl-time` set `#![forbid(unsafe_code)]`. Keep it.
+`labstream-wire`, `labstream-proto`, and `labstream-time` set `#![forbid(unsafe_code)]`. Keep it.
 
-## Floating point in `lsl-time`
+## Floating point in `labstream-time`
 
 The timestamp filter must give the same result as the C++ filter, bit for bit.
 Every operation keeps the order of the C++ source. A different order gives a
@@ -77,7 +77,7 @@ a sequence of operations with a mathematically equal one.
 | unit | `src/*.rs` | one rule, with a byte slice or a number |
 | golden | `tests/golden.rs` | compares against recorded output of liblsl |
 | mutant | `tests/mutants.rs` | makes sure that the golden data catches a defect |
-| live | `crates/lsl-net/tests/*_live.rs` | binds a loopback socket |
+| live | `crates/labstream-net/tests/*_live.rs` | binds a loopback socket |
 
 A mutant test proves that the golden data has value. It changes the code on
 purpose and makes sure that at least one recorded case fails.

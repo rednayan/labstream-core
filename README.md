@@ -1,4 +1,4 @@
-# lsl-rustlang
+# labstream-core
 
 A Lab Streaming Layer core library in Rust.
 
@@ -8,7 +8,7 @@ LabRecorder, and a third-party recorder each do so.
 
 ## Status
 
-This is version 0.1.0. The protocol work is complete and measured. The Rust API
+This is version 0.1.0. The protocol work is complete and measured. These crates
 can change before version 1.0. liblsl fixes the C ABI, so the C ABI will not
 change.
 
@@ -18,7 +18,7 @@ change.
 | Example programs of liblsl that link and agree | 21 of 21 |
 | XPath queries answered as the oracle answers them | 42 of 42 |
 | Longest recording | 7.81 hours, 8.4 million samples, no loss |
-| Tests in this repository | 218 |
+| Tests in this repository | 226 |
 
 A separate conformance workbench made each measurement against a pinned build
 of liblsl at commit `e651023c`. `docs/conformance.md` gives the method and the
@@ -28,30 +28,37 @@ full result.
 
 | Crate | What it holds | Touches the operating system |
 |---|---|---|
-| `lsl-wire` | the sample codec | no |
-| `lsl-proto` | the handshake, discovery, and time sync | no |
-| `lsl-time` | the timestamp filter, bit exact | no |
-| `lsl-net` | sockets, outlet, inlet, resolver, configuration, XPath | yes |
-| `lsl-capi` | the C ABI, built as `liblsl.so` | yes |
+| `labstream-wire` | the sample codec | no |
+| `labstream-proto` | the handshake, discovery, and time sync | no |
+| `labstream-time` | the timestamp filter, bit exact | no |
+| `labstream-net` | sockets, outlet, inlet, resolver, configuration, XPath | yes |
+| `labstream-capi` | the C ABI, built as `liblsl.so` | yes |
 
-Only `lsl-net` touches the operating system. A protocol rule therefore gets a
-unit test with a byte slice. Only the tests of `lsl-net` need a network.
+Only `labstream-net` touches the operating system. A protocol rule therefore gets a
+unit test with a byte slice. Only the tests of `labstream-net` need a network.
 
 ## Add the library to a Rust program
+
+Most programs want [`labstream`](https://github.com/rednayan/labstream) and not
+these crates. That crate is the API: it holds the block reads, the channel list,
+the query builder, and the error type. It calls the crates here.
+
+Use the crates here directly when a program needs a protocol detail that the API
+does not give.
 
 This library is not on crates.io yet. Add it from git:
 
 ```toml
 [dependencies]
-lsl-net = { git = "https://github.com/rednayan/lsl-rustlang" }
-lsl-wire = { git = "https://github.com/rednayan/lsl-rustlang" }
+labstream-net = { git = "https://github.com/rednayan/labstream-core" }
+labstream-wire = { git = "https://github.com/rednayan/labstream-core" }
 ```
 
 ### Send samples
 
 ```rust
-use lsl_net::{clock, Outlet, StreamInfo};
-use lsl_wire::{Format, Sample, Value};
+use labstream_net::{clock, Outlet, StreamInfo};
+use labstream_wire::{Format, Sample, Value};
 use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
@@ -73,7 +80,7 @@ fn main() -> std::io::Result<()> {
 ### Receive samples
 
 ```rust
-use lsl_net::{resolve, Inlet};
+use labstream_net::{resolve, Inlet};
 use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
@@ -88,20 +95,20 @@ fn main() -> std::io::Result<()> {
 }
 ```
 
-A larger example is in `crates/lsl-net/examples/publish.rs`. It publishes a
+A larger example is in `crates/labstream-net/examples/publish.rs`. It publishes a
 signal that a recorder on another machine can find and read back.
 
 ```sh
-cargo run --release -p lsl-net --example publish -- --name RustTest
+cargo run --release -p labstream-net --example publish -- --name RustTest
 ```
 
 ## Use the library from C, C++, or Python
 
-`lsl-capi` builds a shared library named `liblsl.so`. It exports the 165 C
+`labstream-capi` builds a shared library named `liblsl.so`. It exports the 165 C
 symbols of liblsl.
 
 ```sh
-cargo build -p lsl-capi --release
+cargo build -p labstream-capi --release
 ```
 
 The result is at `target/release/liblsl.so`. An application finds it the way it
@@ -121,7 +128,7 @@ cargo build --workspace
 cargo test --workspace
 ```
 
-The tests need no network hardware and no C++ toolchain. The tests of `lsl-net`
+The tests need no network hardware and no C++ toolchain. The tests of `labstream-net`
 bind loopback sockets. All 218 tests run in about 10 seconds.
 
 ## Protocol 1.00

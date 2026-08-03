@@ -9,53 +9,53 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
-name = "libc"
-version = "0.2.189"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
-
-[[package]]
-name = "lsl-capi"
+name = "labstream-capi"
 version = "0.1.0"
 dependencies = [
+ "labstream-net",
+ "labstream-time",
+ "labstream-wire",
  "libc",
- "lsl-net",
- "lsl-time",
- "lsl-wire",
 ]
 
 [[package]]
-name = "lsl-net"
+name = "labstream-net"
 version = "0.1.0"
 dependencies = [
+ "labstream-proto",
+ "labstream-time",
+ "labstream-wire",
  "libc",
- "lsl-proto",
- "lsl-time",
- "lsl-wire",
  "socket2",
 ]
 
 [[package]]
-name = "lsl-proto"
+name = "labstream-proto"
 version = "0.1.0"
 dependencies = [
- "lsl-wire",
+ "labstream-wire",
  "serde_json",
 ]
 
 [[package]]
-name = "lsl-time"
+name = "labstream-time"
 version = "0.1.0"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
-name = "lsl-wire"
+name = "labstream-wire"
 version = "0.1.0"
 dependencies = [
  "serde_json",
 ]
+
+[[package]]
+name = "libc"
+version = "0.2.189"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
 name = "memchr"

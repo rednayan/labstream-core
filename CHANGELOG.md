@@ -12,15 +12,15 @@ Layer.
 
 ### Added
 
-- `lsl-wire`: the sample codec for protocol 1.10. This crate holds no input
+- `labstream-wire`: the sample codec for protocol 1.10. This crate holds no input
   and no output.
-- `lsl-proto`: the handshake, the discovery messages, and the time sync. This
+- `labstream-proto`: the handshake, the discovery messages, and the time sync. This
   crate holds no input and no output.
-- `lsl-time`: the timestamp filter. The result matches the C++ filter bit for
+- `labstream-time`: the timestamp filter. The result matches the C++ filter bit for
   bit.
-- `lsl-net`: sockets, outlet, inlet, resolver, configuration file, and XPath
+- `labstream-net`: sockets, outlet, inlet, resolver, configuration file, and XPath
   queries.
-- `lsl-capi`: the C ABI. It exports 165 symbols and builds as `liblsl.so`.
+- `labstream-capi`: the C ABI. It exports 165 symbols and builds as `liblsl.so`.
 - `SPEC.md`: the protocol document. Every claim cites the C++ source.
 - `docs/conformance.md`: the conformance result and the method.
 
@@ -37,5 +37,5 @@ Layer.
 - Protocol 1.00. That version carries every sample in a Boost archive. An
   inlet that asks for 1.00 gets a refusal, not a wrong read.
 
-[Unreleased]: https://github.com/rednayan/lsl-rustlang/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/rednayan/lsl-rustlang/releases/tag/v0.1.0
+[Unreleased]: https://github.com/rednayan/labstream-core/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rednayan/labstream-core/releases/tag/v0.1.0

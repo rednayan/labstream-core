@@ -1,0 +1,14 @@
+[package]
+name = "labstream-proto"
+version.workspace = true
+description = "The LSL protocol state machines. No input and no output."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+labstream-wire = { path = "../labstream-wire" }
+
+[dev-dependencies]
+serde_json = "1"
