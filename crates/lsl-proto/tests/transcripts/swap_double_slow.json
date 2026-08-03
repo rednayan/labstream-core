@@ -1,0 +1,9 @@
+{
+ "case": "swap_double_slow",
+ "oracle_commit": "e651023ca67996a05a028fd88a28603297120294",
+ "format": "double64",
+ "channels": 4,
+ "stream_uid": "46555880-cf6a-4ae0-9095-6cef667bd063",
+ "request": "LSL:streamfeed/110 46555880-cf6a-4ae0-9095-6cef667bd063\r\nNative-Byte-Order: 4321\r\nEndian-Performance: 0\r\nHas-IEEE754-Floats: 1\r\nSupports-Subnormals: 1\r\nValue-Size: 8\r\nData-Protocol-Version: 110\r\nMax-Buffer-Length: 360\r\nMax-Chunk-Length: 0\r\nHostname: transcriptrig\r\nSource-Id: transcriptrig\r\nSession-Id: default\r\n\r\n",
+ "answer": "LSL/110 200 OK\r\nUID: 46555880-cf6a-4ae0-9095-6cef667bd063\r\nByte-Order: 4321\r\nSuppress-Subnormals: 0\r\nData-Protocol-Version: 110\r\n\r\n"
+}

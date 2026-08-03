@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<info>
+	<name>Desc</name>
+	<type>Interop</type>
+	<channel_count>2</channel_count>
+	<channel_format>float32</channel_format>
+	<source_id>desc_src</source_id>
+	<nominal_srate>100.0000000000000</nominal_srate>
+	<version>1.100000000000000</version>
+	<created_at>PINNED</created_at>
+	<uid>PINNED</uid>
+	<session_id />
+	<hostname />
+	<v4address />
+	<v4data_port>PINNED</v4data_port>
+	<v4service_port>PINNED</v4service_port>
+	<v6address />
+	<v6data_port>PINNED</v6data_port>
+	<v6service_port>PINNED</v6service_port>
+	<desc>
+		<channels>
+			<channel>
+				<label>C3</label>
+			</channel>
+		</channels>
+	</desc>
+</info>

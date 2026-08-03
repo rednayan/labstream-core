@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "crates/lsl-wire",
+    "crates/lsl-proto",
+    "crates/lsl-time",
+    "crates/lsl-net",
+    "crates/lsl-capi",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+repository = "https://github.com/rednayan/lsl-rustlang"
+authors = ["rednayan"]
+keywords = ["lsl", "labstreaminglayer", "eeg", "neuroscience", "streaming"]
+categories = ["network-programming", "science"]
+
+# The golden tests read several thousand recorded vectors. At opt-level 0 the
+# decoder makes the suite slow enough to discourage a person from running it.
+[profile.test]
+opt-level = 1

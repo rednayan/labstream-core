@@ -1,0 +1,68 @@
+===== unterminated_reference
+--- name: Probe
+<desc>
+		<v>100% &amp;amp fine</v>
+	</desc>
+
+===== mixed_content
+--- name: Probe
+<desc>
+		<v>a<b />c</v>
+	</desc>
+
+===== whitespace_only_text
+--- name: Probe
+<desc>
+		<v />
+	</desc>
+
+===== attribute
+--- name: Probe
+<desc>
+		<v id="1" unit="mV">x</v>
+	</desc>
+
+===== cdata
+--- name: Probe
+<desc>
+		<v><![CDATA[a & <b>]]></v>
+	</desc>
+
+===== comment
+--- name: Probe
+<desc>
+		<v>x</v>
+	</desc>
+
+===== numeric_reference
+--- name: Probe
+<desc>
+		<v>AB
+</v>
+	</desc>
+
+===== nested_empty
+--- name: Probe
+<desc>
+		<a />
+		<b />
+	</desc>
+
+===== attribute_escapes
+--- name: Probe
+<desc>
+		<v a="x&amp;y&quot;z&#10;w&#09;t&lt;u>" b="s'q">1</v>
+	</desc>
+
+===== attribute_only
+--- name: Probe
+<desc>
+		<v a="1" />
+	</desc>
+
+===== cdata_and_text
+--- name: Probe
+<desc>
+		<v>a<![CDATA[<b>]]>c</v>
+	</desc>
+

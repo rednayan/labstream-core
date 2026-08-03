@@ -1,0 +1,13 @@
+[package]
+name = "lsl-time"
+version.workspace = true
+description = "Timestamp post-processing for LSL: clock sync, jitter removal, monotonic clamping."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+serde_json = "1"

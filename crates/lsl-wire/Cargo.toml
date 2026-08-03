@@ -1,0 +1,13 @@
+[package]
+name = "lsl-wire"
+version.workspace = true
+description = "The LSL sample codec, protocol 1.10. No input and no output."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+serde_json = "1"

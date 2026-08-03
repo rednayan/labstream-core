@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<info>
+	<name>Desc</name>
+	<type>Interop</type>
+	<channel_count>1</channel_count>
+	<channel_format>int8</channel_format>
+	<source_id>desc_src</source_id>
+	<nominal_srate>0.000000000000000</nominal_srate>
+	<version>1.100000000000000</version>
+	<created_at>PINNED</created_at>
+	<uid>PINNED</uid>
+	<session_id />
+	<hostname />
+	<v4address />
+	<v4data_port>PINNED</v4data_port>
+	<v4service_port>PINNED</v4service_port>
+	<v6address />
+	<v6data_port>PINNED</v6data_port>
+	<v6service_port>PINNED</v6service_port>
+	<desc>
+		<amp>a &amp; b</amp>
+		<angles>&lt;tag&gt; &amp; &lt;/tag&gt;</angles>
+		<quotes>he said "hi" and 'bye'</quotes>
+		<lines>one
+two
+three	four</lines>
+		<utf8>µV ∆</utf8>
+	</desc>
+</info>

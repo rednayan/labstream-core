@@ -1,0 +1,14 @@
+/target
+**/*.rs.bk
+*.pdb
+
+# The C ABI build output, when a person copies it next to the source.
+*.so
+*.dylib
+*.dll
+
+# Editor and operating system files.
+.DS_Store
+*.swp
+.idea/
+.vscode/

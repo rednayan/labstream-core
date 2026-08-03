@@ -1,0 +1,12 @@
+{
+ "case": "jitter",
+ "count": 3,
+ "srate_bits": "4059000000000000",
+ "halftime_bits": "4056800000000000",
+ "samples": [
+  ["40b3880db8983c9f", "40b3880db898e240"],
+  ["40b3880f16e3aad0", "40b3880f16e3aacf"],
+  ["40b38811decc4e43", "40b38811a288851d"]
+ ],
+ "final": {"w0": "3faaf8a56bb6fe79", "w1": "3f8098d73d05514b", "p00": "3feaab9e00c8b963", "p01": "bfe000873b9c2715", "p11": "3fe00051238c1cf4", "lam": "3fefff5e7dc096e8", "t0": 5000, "samples_since_t0": 3}
+}
