@@ -10,7 +10,7 @@ LabRecorder, and a third-party recorder each do so.
 
 This is version 0.1.0. The protocol work is complete and measured. These crates
 can change before version 1.0. liblsl fixes the C ABI, so the C ABI will not
-change.
+change. `docs/versioning.md` gives the full rule.
 
 | Measure | Result |
 |---|---|
@@ -39,9 +39,9 @@ unit test with a byte slice. Only the tests of `labstream-net` need a network.
 
 ## Add the library to a Rust program
 
-Most programs want [`labstream`](https://github.com/rednayan/labstream) and not
-these crates. That crate is the API: it holds the block reads, the channel list,
-the query builder, and the error type. It calls the crates here.
+Most programs want `labstream` and not these crates. That crate is the API: it
+holds the block reads, the channel list, the query builder, and the error type.
+It calls the crates here. `labstream` is not published yet.
 
 Use the crates here directly when a program needs a protocol detail that the API
 does not give.
@@ -129,7 +129,7 @@ cargo test --workspace
 ```
 
 The tests need no network hardware and no C++ toolchain. The tests of `labstream-net`
-bind loopback sockets. All 218 tests run in about 10 seconds.
+bind loopback sockets. All 226 tests run in about 10 seconds.
 
 ## Protocol 1.00
 
@@ -160,6 +160,7 @@ explains where to find the workbench.
 |---|---|
 | `SPEC.md` | the protocol, with a citation for every claim |
 | `docs/conformance.md` | what was measured, how, and the result |
+| `docs/versioning.md` | what the version number covers, and how to release |
 | `CONTRIBUTING.md` | how to make a change and how to test it |
 | `CHANGELOG.md` | what changed in each version |
 

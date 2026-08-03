@@ -14,6 +14,7 @@ edition = "2021"
 rust-version = "1.75"
 license = "MIT"
 repository = "https://github.com/rednayan/labstream-core"
+readme = "README.md"
 authors = ["rednayan"]
 keywords = ["lsl", "labstreaminglayer", "eeg", "neuroscience", "streaming"]
 categories = ["network-programming", "science"]

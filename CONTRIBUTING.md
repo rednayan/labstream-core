@@ -17,7 +17,7 @@ project without a check against the source.
 
 1. Run `cargo fmt --all`.
 2. Run `cargo clippy --workspace --all-targets`. Correct every warning.
-3. Run `cargo test --workspace`. All 218 tests must pass.
+3. Run `cargo test --workspace`. Every test must pass.
 4. Run `cargo doc --workspace --no-deps`. Correct every warning.
 
 If you change a protocol rule, read the next section first.

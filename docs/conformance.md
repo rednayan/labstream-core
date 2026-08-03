@@ -16,7 +16,7 @@ libraries agree.
 
 | Evidence | Measure |
 |---|---|
-| Tests in this repository | 218 |
+| Tests in this repository | 226 |
 | C symbols exported | 165 of 165, none a stub |
 | Golden vectors, transcripts, time sequences | 42, 22, and 10 with 96,008 samples |
 | Interop cells | 28 default, 16 blocking, 12 IPv6, and more |
@@ -101,15 +101,17 @@ Do not read a claim into this page that the table does not hold.
 
 ## The workbench
 
-The tools that made these measurements live in a separate repository. That
-repository holds the C++ library, the comparison tools, and the recorded
-output.
+The tools that made these measurements live in a separate repository, the
+conformance workbench. That repository holds the vendored C++ library, the
+comparison tools, and the recorded output. It is not published yet.
 
 The workbench stays separate for one reason. It needs a C++ toolchain, cmake,
 Python, and a network. This repository needs none of them.
 
 The source of this library cites workbench files as `captures/…`,
-`artifacts/…`, and `oracle/…`. Those paths name files in the workbench.
+`artifacts/…`, and `oracle/…`. Those paths name files in the workbench. A
+citation of the C++ source, such as `src/tcp_server.cpp:328`, names a file
+below `liblsl/` in the workbench. That directory holds the pinned oracle.
 
 If you change a protocol rule, ask for a conformance run in your pull request.
 `CONTRIBUTING.md` explains when a run is necessary.

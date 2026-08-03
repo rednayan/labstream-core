@@ -23,6 +23,7 @@ Layer.
 - `labstream-capi`: the C ABI. It exports 165 symbols and builds as `liblsl.so`.
 - `SPEC.md`: the protocol document. Every claim cites the C++ source.
 - `docs/conformance.md`: the conformance result and the method.
+- `docs/versioning.md`: what the version number covers, and how to release.
 
 ### Verified
 
@@ -30,7 +31,7 @@ Layer.
 - 21 of 21 example programs of liblsl link and agree.
 - 42 of 42 XPath queries return what the C++ library returns.
 - One recording of 7.81 hours held 8.4 million samples with no loss.
-- 218 tests pass in this repository.
+- 226 tests pass in this repository.
 
 ### Refused
 

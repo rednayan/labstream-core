@@ -1,0 +1,23 @@
+version: 2
+
+updates:
+  # The workflow pins each action to a major version. An update to one of them
+  # can stop CI, and CI is the only automatic check of a pull request.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: Update
+
+  # This workspace holds two dependencies that are not development only: libc
+  # and socket2. A change to either one touches the socket layer.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: Update
+    groups:
+      dev-dependencies:
+        dependency-type: development
