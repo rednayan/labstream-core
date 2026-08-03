@@ -1,0 +1,12 @@
+# Every text file keeps one line ending on every platform.
+#
+# Git on Windows converts a line ending on checkout by default. A test that
+# compares against recorded output of liblsl then reads two bytes where the
+# record holds one, and the test fails on Windows alone.
+* text=auto eol=lf
+
+# Golden data holds bytes that liblsl wrote. Git must change no byte of it.
+# `-text` stops every conversion, and a person can still read a difference.
+crates/labstream-wire/tests/vectors/** -text
+crates/labstream-net/tests/desc/** -text
+crates/labstream-time/tests/sequences/** -text
