@@ -481,7 +481,10 @@ mod tests {
         let mut bytes = Vec::new();
         for off in [2, 4] {
             codec
-                .encode(&labstream_wire::test_pattern(Format::Float32, 2, off), &mut bytes)
+                .encode(
+                    &labstream_wire::test_pattern(Format::Float32, 2, off),
+                    &mut bytes,
+                )
                 .unwrap();
         }
         match c.on_test_pattern(&bytes) {

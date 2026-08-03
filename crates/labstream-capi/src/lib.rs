@@ -1723,13 +1723,14 @@ pub unsafe extern "C" fn lsl_get_fullinfo(
     }
     // The short description that discovery returned carries no tree. The tree
     // travels on the data port, so ask for it there. `src/info_receiver.cpp`.
-    let info = match labstream_net::read_fullinfo(&b.info, Duration::from_secs_f64(timeout.max(0.1))) {
-        Ok(full) => full,
-        // liblsl blocks until the whole description arrives and reports a
-        // timeout. A failure here leaves the short description, which holds
-        // every field except the tree.
-        Err(_) => b.info.clone(),
-    };
+    let info =
+        match labstream_net::read_fullinfo(&b.info, Duration::from_secs_f64(timeout.max(0.1))) {
+            Ok(full) => full,
+            // liblsl blocks until the whole description arrives and reports a
+            // timeout. A failure here leaves the short description, which holds
+            // every field except the tree.
+            Err(_) => b.info.clone(),
+        };
     InfoBox::new(info) as lsl_streaminfo
 }
 
