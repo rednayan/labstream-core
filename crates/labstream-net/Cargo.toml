@@ -15,7 +15,12 @@ categories.workspace = true
 labstream-wire = { path = "../labstream-wire" }
 labstream-proto = { path = "../labstream-proto" }
 labstream-time = { path = "../labstream-time" }
-libc = "0.2.189"
 # Only for one socket option that the standard library does not expose.
 # `src/udp_server.cpp:60` sets it, and a second outlet needs it.
 socket2 = "0.5"
+
+# Only for `clock_gettime`, which gives the clock that liblsl reads. Windows
+# has no such function. `clock()` reads the performance counter there, through
+# a declaration in `src/lib.rs`, and needs no crate for it.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.189"

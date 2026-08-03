@@ -75,7 +75,27 @@ pub const MULTICAST_PORT: u16 = 16571;
 /// `/proc/uptime` counts a different one: it includes time spent suspended, so
 /// it read 66,567 on a machine where `CLOCK_MONOTONIC` read 31,492. The system
 /// call is the only source that agrees.
+///
+/// Each platform reads its own clock. `machine_clock` gives the note for the
+/// platform.
 pub fn clock() -> f64 {
+    if let Some(seconds) = machine_clock() {
+        return seconds;
+    }
+    // A platform with no clock above falls back to the process clock.
+    // Timestamps then carry the wrong origin, and only a peer that applies the
+    // clock correction reads them correctly.
+    use std::sync::OnceLock;
+    use std::time::Instant;
+    static START: OnceLock<Instant> = OnceLock::new();
+    START.get_or_init(Instant::now).elapsed().as_secs_f64()
+}
+
+/// The clock of the machine, in seconds, or `None` where there is none.
+///
+/// Unix reads `CLOCK_MONOTONIC`, which is what `steady_clock` reads there.
+#[cfg(unix)]
+fn machine_clock() -> Option<f64> {
     #[allow(unsafe_code)]
     {
         let mut ts = libc::timespec {
@@ -86,16 +106,88 @@ pub fn clock() -> f64 {
         // reads nothing else. The value is stack-allocated and initialized.
         let rc = unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts) };
         if rc == 0 {
-            return ts.tv_sec as f64 + ts.tv_nsec as f64 * 1e-9;
+            return Some(ts.tv_sec as f64 + ts.tv_nsec as f64 * 1e-9);
         }
     }
-    // A platform without that call falls back to the process clock. Timestamps
-    // then carry the wrong origin, and only a peer that applies the clock
-    // correction reads them correctly.
-    use std::sync::OnceLock;
-    use std::time::Instant;
-    static START: OnceLock<Instant> = OnceLock::new();
-    START.get_or_init(Instant::now).elapsed().as_secs_f64()
+    None
+}
+
+/// The clock of the machine, in seconds, or `None` where there is none.
+///
+/// # Why Windows needs its own arithmetic
+///
+/// Windows has no `clock_gettime`. MSVC builds `steady_clock` on the
+/// performance counter, and liblsl reads `steady_clock` (`src/common.cpp:20`),
+/// so this function reads the same counter. The counter starts when the
+/// machine starts, and every process on the machine reads one value.
+///
+/// MSVC divides before it multiplies, which keeps a large counter inside an
+/// `i64`:
+///
+/// ```text
+/// whole = (counter / frequency) * 1_000_000_000
+/// part  = (counter % frequency) * 1_000_000_000 / frequency
+/// ```
+///
+/// This function keeps that order. It holds the whole seconds and the
+/// nanoseconds apart, because `f64` carries 53 bits and a machine that ran for
+/// 104 days has more nanoseconds than that. liblsl divides the same way and
+/// gives the reason (`src/common.cpp:46-48`).
+///
+/// The multiplication uses `i128`. A counter frequency above 9.2 GHz overflows
+/// an `i64` here, and an overflow stops a program in a debug build. No counter
+/// runs that fast. The wider type costs nothing and removes the case.
+#[cfg(windows)]
+fn machine_clock() -> Option<f64> {
+    #[allow(unsafe_code)]
+    {
+        let mut frequency: i64 = 0;
+        let mut counter: i64 = 0;
+        // SAFETY: each call writes one `i64` through the pointer and reads
+        // nothing else. Both values are stack-allocated and initialized.
+        let ok = unsafe {
+            QueryPerformanceFrequency(&mut frequency) != 0
+                && QueryPerformanceCounter(&mut counter) != 0
+        };
+        // Windows XP and every later version always answer. A zero frequency
+        // would divide by zero, so this checks it.
+        if ok && frequency > 0 {
+            return Some(counter_seconds(counter, frequency));
+        }
+    }
+    None
+}
+
+/// Seconds from a performance counter and its frequency.
+///
+/// Only Windows calls this. Every platform compiles it, so a test of the
+/// arithmetic runs everywhere. Windows is the one platform that this
+/// repository does not measure against liblsl.
+///
+/// The caller must give a frequency above zero.
+#[cfg_attr(not(windows), allow(dead_code))]
+fn counter_seconds(counter: i64, frequency: i64) -> f64 {
+    let seconds = counter / frequency;
+    let rest = (counter % frequency) as i128;
+    let nanoseconds = (rest * 1_000_000_000 / frequency as i128) as f64;
+    seconds as f64 + nanoseconds * 1e-9
+}
+
+/// The clock of the machine, in seconds, or `None` where there is none.
+#[cfg(not(any(unix, windows)))]
+fn machine_clock() -> Option<f64> {
+    None
+}
+
+// `QueryPerformanceCounter` counts from the moment the machine started, and
+// `QueryPerformanceFrequency` gives the counts in one second. The frequency
+// does not change while the machine runs.
+#[cfg(windows)]
+#[allow(unsafe_code)]
+#[link(name = "kernel32")]
+extern "system" {
+    fn QueryPerformanceCounter(count: *mut i64) -> i32;
+    fn QueryPerformanceFrequency(frequency: *mut i64) -> i32;
 }
 
 /// Build a stream instance identifier.
@@ -260,6 +352,82 @@ mod tests {
         let a = clock();
         std::thread::sleep(std::time::Duration::from_millis(5));
         assert!(clock() > a);
+    }
+}
+
+/// The arithmetic of the Windows clock. SPEC.md 3.0.
+///
+/// Only Windows runs `counter_seconds`, and no measurement compares this
+/// library against liblsl on Windows. These tests are therefore the only check
+/// of that arithmetic, and they run on every platform.
+#[cfg(test)]
+mod counter {
+    use super::counter_seconds;
+
+    /// 10 MHz is the frequency of most machines. MSVC holds a separate branch
+    /// for it that multiplies the counter by 100 to get nanoseconds. The two
+    /// branches must give one answer.
+    const TEN_MHZ: i64 = 10_000_000;
+
+    #[test]
+    fn a_whole_number_of_seconds_carries_no_remainder() {
+        assert_eq!(counter_seconds(TEN_MHZ * 7, TEN_MHZ), 7.0);
+        assert_eq!(counter_seconds(0, TEN_MHZ), 0.0);
+    }
+
+    #[test]
+    fn a_part_of_a_second_reads_as_a_fraction() {
+        // A quarter of a second at 10 MHz is 2,500,000 counts.
+        assert_eq!(counter_seconds(2_500_000, TEN_MHZ), 0.25);
+        // One microsecond is 10 counts.
+        let one_microsecond = counter_seconds(10, TEN_MHZ);
+        assert!((one_microsecond - 1e-6).abs() < 1e-15);
+    }
+
+    #[test]
+    fn the_ten_megahertz_branch_of_the_source_agrees() {
+        // MSVC returns `counter * 100` nanoseconds at this frequency. The
+        // general form must give the same seconds.
+        for counter in [1_i64, 999, 12_345_678, 8_985_600_000_000] {
+            let theirs = (counter * 100) as f64 * 1e-9;
+            let ours = counter_seconds(counter, TEN_MHZ);
+            assert!(
+                (ours - theirs).abs() < 1e-9,
+                "counter {counter}: {ours} against {theirs}"
+            );
+        }
+    }
+
+    /// A machine that ran for 104 days holds more nanoseconds than an `f64`
+    /// carries. liblsl keeps the whole seconds apart from the rest for that
+    /// reason (`src/common.cpp:46-48`), and this function does the same.
+    ///
+    /// The whole second must stay exact, and the rest must stay inside a
+    /// nanosecond. A later change that divides a whole nanosecond count by 1e9
+    /// loses the second one first.
+    #[test]
+    fn a_long_uptime_keeps_the_microseconds() {
+        let days_104 = 104 * 24 * 60 * 60; // 8,985,600 seconds
+        let counter = TEN_MHZ * days_104 + 25; // and 2.5 microseconds
+        let seconds = counter_seconds(counter, TEN_MHZ);
+        assert_eq!(seconds.trunc(), days_104 as f64);
+        // An `f64` at 8.9 million holds about 2 nanoseconds in its last bit,
+        // so this is the resolution that remains after 104 days.
+        let rest = seconds - days_104 as f64;
+        assert!(
+            (rest - 2.5e-6).abs() < 1e-8,
+            "the rest reads {rest}, and 2.5 microseconds was pushed"
+        );
+    }
+
+    /// A frequency that is not 10 MHz has to work as well. 3,579,545 Hz is the
+    /// frequency of an older machine.
+    #[test]
+    fn an_odd_frequency_gives_the_right_second() {
+        let frequency = 3_579_545;
+        assert_eq!(counter_seconds(frequency * 3, frequency), 3.0);
+        let half = counter_seconds(frequency / 2, frequency);
+        assert!((half - 0.5).abs() < 1e-6, "half a second read {half}");
     }
 }
 
