@@ -97,14 +97,44 @@ platforms. The three results are not the same.
 | Platform | Builds | Tests | Compared against liblsl |
 |---|---|---|---|
 | Linux | yes | 231 pass | yes |
-| macOS | yes | 230 pass, 1 fails | no |
-| Windows | yes | 230 pass, 1 is intermittent | no |
+| macOS | yes | 2 open cases | no |
+| Windows | yes | 2 open cases | no |
 
 Only Linux carries a measurement. The other two platforms run the tests of
 this repository and nothing more. A test here comes from a reading of the C++
 source, and this page gives four defects that such a test did not catch.
 
-### macOS
+Two of the three open cases below are the same class of question. A test holds
+an expectation that Linux meets and another platform does not. Until a
+measurement says what liblsl does on that platform, no person knows whether
+the library is wrong or the test is.
+
+### The port of each family, on macOS and Windows
+
+`an_outlet_reports_a_port_for_each_protocol` asserts that the IPv4 data port
+and the IPv6 data port differ. The test passes on Linux. It passes in one run
+and fails in the next on macOS and on Windows.
+
+`bind_udp_in_range` (`src/outlet.rs:307`) scans the port range and binds the
+first free port for each family. It does not set `IPV6_V6ONLY`, so each
+platform applies its own default:
+
+| Platform | Default | Result |
+|---|---|---|
+| Linux | dual stack | The IPv6 bind meets the IPv4 socket on that port, so the scan moves to the next one. The two ports differ. |
+| macOS, Windows | IPv6 only | The two families do not meet, so both can take one port number. |
+
+One port number for both families is not a defect by itself. The description
+carries a port for each family, and a reader connects to the one of its own
+family. The open question is what liblsl reports on those platforms.
+
+A person with either platform can answer it. Build liblsl there, open one
+outlet, and read `v4data_port` and `v6data_port` from the description. Two
+different numbers say that liblsl sets `IPV6_V6ONLY` or scans differently, and
+this library must match. One number says that liblsl does what this library
+does, and the assertion is wrong.
+
+### The multicast port of a second outlet, on macOS
 
 `both_outlets_hold_the_multicast_port` fails. A second outlet in one program
 does not hold the multicast port. Another machine then sees one of the two
@@ -140,8 +170,9 @@ arithmetic has its own tests, and every platform runs them.
 `no_stage_leaves_a_timestamp_alone` passes in one run and fails in the next.
 It waits five seconds for one sample over loopback. A run that fails reports no
 sample, and not a wrong one, so the evidence points at the time limit and not
-at the protocol. `an_outlet_reports_a_port_for_each_protocol` failed once in
-the same way, and it reported one port number for both families.
+at the protocol.
+
+The port of each family is the second open case. The section above gives it.
 
 No measurement covers Windows. Use Linux for a measured result.
 

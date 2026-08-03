@@ -5,6 +5,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/conformance.md` gives a third open case.
+  `an_outlet_reports_a_port_for_each_protocol` asserts that the IPv4 data port
+  and the IPv6 data port differ. macOS and Windows can give one number for
+  both, because `bind_udp_in_range` does not set `IPV6_V6ONLY` and those
+  platforms default to one family for each socket. The page names the
+  measurement that says whether the library or the test is wrong.
+
 ## [0.1.0] - 2026-08-03
 
 The first release. The library speaks protocol 1.10 of the Lab Streaming
