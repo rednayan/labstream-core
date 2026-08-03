@@ -80,6 +80,36 @@ impl SampleQueue {
         self.room.notify_one();
     }
 
+    /// Add several samples with one lock. This never waits.
+    ///
+    /// The result is the same as one [`SampleQueue::push`] for each sample, in
+    /// order. A full queue loses its oldest samples, and the count of dropped
+    /// samples grows by the number that the queue lost. The recorded behavior in
+    /// `artifacts/behavior-liblsl.json` therefore still holds.
+    ///
+    /// One lock for a block is the difference between a stream that a program
+    /// can read at 1000 Hz and one that it cannot.
+    pub fn push_many(&self, samples: &[Sample]) {
+        if samples.is_empty() {
+            return;
+        }
+        let mut q = self.inner.lock().unwrap();
+        let mut lost = 0u64;
+        for s in samples {
+            if q.len() >= self.capacity {
+                q.pop_front();
+                lost += 1;
+            }
+            q.push_back(s.clone());
+        }
+        drop(q);
+        if lost > 0 {
+            self.dropped.fetch_add(lost, Ordering::SeqCst);
+        }
+        // A block can satisfy more than one reader, so every reader wakes.
+        self.room.notify_all();
+    }
+
     /// Take the oldest sample, waiting up to `timeout`.
     ///
     /// Returns `None` when the timeout passes with nothing waiting, or when the
@@ -105,6 +135,47 @@ impl SampleQueue {
             q = guard;
             if result.timed_out() && Instant::now() >= end {
                 return q.pop_front();
+            }
+        }
+    }
+
+    /// Take every sample that waits, up to `max`, with one lock.
+    ///
+    /// The samples go to the end of `out`. The call gives how many it added.
+    ///
+    /// The timeout applies to the first sample only. When one sample waits, the
+    /// call takes what is there and returns. It never waits for `max` samples,
+    /// because a program that shows live signals must show what arrived.
+    ///
+    /// A closed and empty queue gives zero.
+    pub fn pop_many(&self, out: &mut Vec<Sample>, max: usize, timeout: Duration) -> usize {
+        if max == 0 {
+            return 0;
+        }
+        let end = Instant::now() + timeout;
+        let mut q = self.inner.lock().unwrap();
+        loop {
+            if !q.is_empty() {
+                let take = q.len().min(max);
+                out.extend(q.drain(..take));
+                return take;
+            }
+            if *self.closed.lock().unwrap() {
+                return 0;
+            }
+            let left = end.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return 0;
+            }
+            let (guard, result) = self
+                .room
+                .wait_timeout(q, left.min(Duration::from_millis(100)))
+                .unwrap();
+            q = guard;
+            if result.timed_out() && Instant::now() >= end {
+                let take = q.len().min(max);
+                out.extend(q.drain(..take));
+                return take;
             }
         }
     }
@@ -168,6 +239,21 @@ impl Fanout {
         }
     }
 
+    /// Give several samples to every consumer, with one lock for the set.
+    ///
+    /// The result for each consumer is the same as one [`Fanout::push`] for each
+    /// sample, in order.
+    pub fn push_many(&self, samples: &[Sample]) {
+        if samples.is_empty() {
+            return;
+        }
+        let mut set = self.consumers.lock().unwrap();
+        set.retain(|q| !q.is_closed());
+        for q in set.iter() {
+            q.push_many(samples);
+        }
+    }
+
     /// Close every consumer queue.
     pub fn close(&self) {
         for q in self.consumers.lock().unwrap().iter() {
@@ -213,6 +299,88 @@ mod tests {
             last = s;
         }
         assert_eq!(index(&last), 599, "the newest sample");
+    }
+
+    #[test]
+    fn a_block_write_gives_what_single_writes_give() {
+        // The batch call is an optimization. It must lose the same samples, keep
+        // the same samples, and count the same drops.
+        let one = SampleQueue::new(100);
+        let many = SampleQueue::new(100);
+        let block: Vec<Sample> = (0..600).map(sample).collect();
+        for s in &block {
+            one.push(s.clone());
+        }
+        many.push_many(&block);
+
+        assert_eq!(one.len(), many.len());
+        assert_eq!(one.dropped(), many.dropped());
+        while let Some(a) = one.pop(Duration::from_millis(10)) {
+            let b = many.pop(Duration::from_millis(10)).expect("the same count");
+            assert_eq!(index(&a), index(&b));
+        }
+        assert!(many.pop(Duration::from_millis(10)).is_none());
+    }
+
+    #[test]
+    fn a_block_read_takes_what_waits_in_order() {
+        let q = SampleQueue::new(100);
+        q.push_many(&(0..10).map(sample).collect::<Vec<_>>());
+
+        let mut out = Vec::new();
+        let got = q.pop_many(&mut out, 4, Duration::from_millis(10));
+        assert_eq!(got, 4, "the call stops at max");
+        assert_eq!(out.iter().map(index).collect::<Vec<_>>(), [0, 1, 2, 3]);
+
+        let got = q.pop_many(&mut out, 100, Duration::from_millis(10));
+        assert_eq!(got, 6, "the call takes what waits, and not more");
+        assert_eq!(out.len(), 10, "the samples go to the end of the buffer");
+        assert_eq!(index(&out[9]), 9);
+    }
+
+    #[test]
+    fn a_block_read_of_an_empty_queue_gives_nothing() {
+        let q = SampleQueue::new(10);
+        let mut out = Vec::new();
+        assert_eq!(q.pop_many(&mut out, 8, Duration::from_millis(5)), 0);
+        assert!(out.is_empty());
+
+        q.close();
+        assert_eq!(q.pop_many(&mut out, 8, Duration::from_millis(50)), 0);
+    }
+
+    #[test]
+    fn a_block_read_waits_for_the_first_sample_only() {
+        // A reader that waited for `max` samples would hold a viewer back by the
+        // time that the rest of the block needs.
+        let q = Arc::new(SampleQueue::new(10));
+        let writer = Arc::clone(&q);
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(20));
+            writer.push_many(&[sample(1), sample(2)]);
+        });
+        let mut out = Vec::new();
+        let start = Instant::now();
+        let got = q.pop_many(&mut out, 1000, Duration::from_secs(5));
+        assert_eq!(got, 2, "the call takes the block that arrived");
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "the call returned"
+        );
+    }
+
+    #[test]
+    fn a_block_reaches_every_consumer() {
+        let fan = Fanout::new();
+        let a = fan.add(10);
+        let b = fan.add(10);
+        fan.push_many(&[sample(7), sample(8)]);
+
+        for q in [&a, &b] {
+            let mut out = Vec::new();
+            assert_eq!(q.pop_many(&mut out, 10, Duration::from_millis(10)), 2);
+            assert_eq!(out.iter().map(index).collect::<Vec<_>>(), [7, 8]);
+        }
     }
 
     #[test]

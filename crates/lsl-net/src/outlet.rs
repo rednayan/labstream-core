@@ -717,6 +717,71 @@ fn find_double_crlf(buf: &[u8]) -> Option<usize> {
 }
 
 impl Outlet {
+    /// Send several samples that share one timestamp, with one lock.
+    ///
+    /// The timestamps are the timestamps of [`Outlet::push_chunk`]. The only
+    /// difference is the number of locks: this takes the set of consumers once
+    /// for the whole block, and each consumer queue once. `push_chunk` takes both
+    /// once for each sample.
+    ///
+    /// A block of 500 samples to 2 consumers costs 3 locks here and 1500 locks
+    /// there.
+    ///
+    /// The blocking mode is not batched. That mode waits for each write on
+    /// purpose, so a block gives no gain.
+    pub fn push_chunk_fast(&self, samples: &[Sample], timestamp: f64) {
+        if samples.is_empty() {
+            return;
+        }
+        if self.shared.sync_mode {
+            self.push_chunk(samples, timestamp);
+            return;
+        }
+        let block: Vec<Sample> = self
+            .chunk_timestamps(samples, timestamp)
+            .map(|(t, s)| Sample {
+                // The rule of `Outlet::push` runs for each sample, so a
+                // configuration that orders the current clock still gets it.
+                timestamp: self.stamp(t),
+                values: s.values.clone(),
+            })
+            .collect();
+        self.shared.fanout.push_many(&block);
+    }
+
+    /// The timestamp of each sample of a chunk. SPEC.md 9.2.
+    fn chunk_timestamps<'a>(
+        &self,
+        samples: &'a [Sample],
+        timestamp: f64,
+    ) -> impl Iterator<Item = (f64, &'a Sample)> {
+        let mut first = if timestamp == 0.0 {
+            crate::clock()
+        } else {
+            timestamp
+        };
+        if self.info.nominal_srate != 0.0 {
+            first -= (samples.len() - 1) as f64 / self.info.nominal_srate;
+        }
+        samples.iter().enumerate().map(move |(k, s)| {
+            let t = if k == 0 {
+                first
+            } else {
+                lsl_wire::DEDUCED_TIMESTAMP
+            };
+            (t, s)
+        })
+    }
+
+    /// Apply the two timestamp rules of [`Outlet::push`].
+    fn stamp(&self, t: f64) -> f64 {
+        if config::get().force_default_timestamps || t == 0.0 {
+            clock()
+        } else {
+            t
+        }
+    }
+
     /// Send several samples that share one timestamp. SPEC.md 9.2.
     ///
     /// The timestamp names the **last** sample. A stream with a rate counts
@@ -726,6 +791,8 @@ impl Outlet {
     ///
     /// An application that acquires a block and stamps it on arrival therefore
     /// gets the right time for every sample in the block.
+    ///
+    /// [`Outlet::push_chunk_fast`] does the same with one lock for the block.
     pub fn push_chunk(&self, samples: &[Sample], timestamp: f64) {
         if samples.is_empty() {
             return;

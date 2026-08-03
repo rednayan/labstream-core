@@ -531,6 +531,38 @@ impl Inlet {
         }
     }
 
+    /// Read every sample that waits, up to `max`, with one lock.
+    ///
+    /// The samples go to the end of `out`. The call gives how many it added.
+    /// Every timestamp passes through the stages that
+    /// [`Inlet::set_postprocessing`] selected, in the order of one
+    /// [`Inlet::pull`] for each sample.
+    ///
+    /// The timeout applies to the first sample only. The call never waits for
+    /// `max` samples, because a program that shows live signals must show what
+    /// arrived.
+    ///
+    /// This is the call for a fast stream. [`Inlet::pull`] takes the queue lock
+    /// and reads the clock for each sample. A stream of 8 channels at 1000 Hz
+    /// therefore costs 1000 locks each second with `pull`, and one lock for each
+    /// block here.
+    pub fn pull_chunk(
+        &mut self,
+        out: &mut Vec<Sample>,
+        max: usize,
+        timeout: Duration,
+    ) -> std::io::Result<usize> {
+        let first = out.len();
+        let got = self.queue.pop_many(out, max, timeout);
+        // Every stage runs here, in the fixed order, one sample after another.
+        // SPEC.md 8.5. The state of the filter carries across the block, so a
+        // block gives the timestamps that the same samples get one at a time.
+        for s in &mut out[first..] {
+            s.timestamp = self.post.process(s.timestamp, &mut self.source);
+        }
+        Ok(got)
+    }
+
     /// How many samples wait for the application.
     pub fn samples_available(&self) -> usize {
         self.queue.len()
