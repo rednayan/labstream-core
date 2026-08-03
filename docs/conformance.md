@@ -89,13 +89,42 @@ error, so the library refuses it instead.
 
 The refusal is measured. An inlet that asks for 1.00 gets a clear refusal.
 
+## Platforms
+
+The workflow in `.github/workflows/ci.yml` builds and tests on three
+platforms. The three results are not the same.
+
+| Platform | Builds | Tests |
+|---|---|---|
+| Linux | yes | 226 pass |
+| macOS | yes | 225 pass, 1 fails |
+| Windows | no | not run |
+
+On macOS the test `both_outlets_hold_the_multicast_port` fails. A second outlet
+in one program does not hold the multicast port. Another machine then sees one
+of the two streams and not both.
+
+`SO_REUSEADDR` lets two sockets share a wildcard port on Linux. BSD needs
+`SO_REUSEPORT` for the same result. liblsl sets only `reuse_address`
+(`src/udp_server.cpp:60`), and no measurement says what liblsl itself does on
+macOS. Do not change the socket option before a measurement answers that.
+
+On Windows `labstream-net` does not build. `clock()` calls `clock_gettime`, and
+the `libc` crate does not give that function on Windows.
+
+A build correction alone is not sufficient there. The fallback clock measures
+from the start of the process. liblsl measures from the start of the machine.
+A Windows build therefore needs a clock that reads the same origin.
+
+Use Linux for a measured result.
+
 ## What is not measured
 
 - Protocol 1.00.
 - A second pair of machines. One pair was measured.
 - Any network other than the one measured here.
-- Windows and macOS at the protocol level. The library builds and the tests
-  pass on both. The interop matrix ran on Linux.
+- Windows and macOS at the protocol level. The interop matrix ran on Linux.
+  The section above gives what each platform does.
 
 Do not read a claim into this page that the table does not hold.
 

@@ -9,6 +9,12 @@ updates:
       interval: weekly
     commit-message:
       prefix: Update
+    ignore:
+      # The MSRV job pins this action to the oldest supported compiler. That
+      # number is the minimum Rust version and not a version to keep current.
+      # An update to it removes the only check of the minimum.
+      # `docs/versioning.md` gives the rule for a change of the minimum.
+      - dependency-name: dtolnay/rust-toolchain
 
   # This workspace holds two dependencies that are not development only: libc
   # and socket2. A change to either one touches the socket layer.

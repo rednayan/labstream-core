@@ -5,6 +5,19 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/conformance.md` gives the result for each platform. Version 0.1.0 said
+  that the library builds and the tests pass on macOS and Windows. That
+  statement was wrong. Windows does not build, and macOS fails one test.
+
+### Known limitations
+
+- Windows: `labstream-net` does not build. `clock()` calls `clock_gettime`,
+  which the `libc` crate does not give on Windows.
+- macOS: a second outlet does not hold the multicast port. Another machine sees
+  one of two streams from one program, and not both.
+
 ## [0.1.0] - 2026-08-03
 
 The first release. The library speaks protocol 1.10 of the Lab Streaming
