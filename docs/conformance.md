@@ -96,43 +96,54 @@ platforms. The three results are not the same.
 
 | Platform | Builds | Tests | Compared against liblsl |
 |---|---|---|---|
-| Linux | yes | 231 pass | yes |
-| macOS | yes | 2 open cases | no |
-| Windows | yes | 2 open cases | no |
+| Linux | yes | 231 pass | the full workbench |
+| macOS | yes | 1 open case | no |
+| Windows | yes | 1 open case | one field |
 
-Only Linux carries a measurement. The other two platforms run the tests of
-this repository and nothing more. A test here comes from a reading of the C++
-source, and this page gives four defects that such a test did not catch.
+Linux carries the full measurement. Windows carries one measurement of one
+field, which the section below gives. macOS carries none, and runs the tests of
+this repository and nothing more.
 
-Two of the three open cases below are the same class of question. A test holds
-an expectation that Linux meets and another platform does not. Until a
-measurement says what liblsl does on that platform, no person knows whether
-the library is wrong or the test is.
+A test here comes from a reading of the C++ source, and this page gives four
+defects that such a test did not catch. A fifth one follows, and a test caught
+that one first.
 
-### The port of each family, on macOS and Windows
+### The port of each family. Answered
 
-`an_outlet_reports_a_port_for_each_protocol` asserts that the IPv4 data port
-and the IPv6 data port differ. The test passes on Linux. It passes in one run
-and fails in the next on macOS and on Windows.
+`an_outlet_reports_a_port_for_each_protocol` asserted that the IPv4 data port
+and the IPv6 data port differ. The test passed on Linux and failed on macOS and
+on Windows.
 
-`bind_udp_in_range` (`src/outlet.rs:307`) scans the port range and binds the
-first free port for each family. It does not set `IPV6_V6ONLY`, so each
-platform applies its own default:
+The assertion was wrong. A measurement on Windows read liblsl through pylsl,
+which carries a build of liblsl for that platform. One outlet reported:
+
+| Field | Value |
+|---|---|
+| `v4data_port` | 16572 |
+| `v6data_port` | 16572 |
+
+liblsl gives one number for both families there. This library gives the same
+number, so it already matches. The assertion has gone, and the test keeps the
+check that each family reports a port.
+
+The mechanism is the default of the platform. liblsl opens one acceptor for
+each family and scans the port range for each one
+(`src/tcp_server.cpp:333-353`). Neither liblsl nor this library sets
+`IPV6_V6ONLY`, so:
 
 | Platform | Default | Result |
 |---|---|---|
 | Linux | dual stack | The IPv6 bind meets the IPv4 socket on that port, so the scan moves to the next one. The two ports differ. |
-| macOS, Windows | IPv6 only | The two families do not meet, so both can take one port number. |
+| macOS, Windows | IPv6 only | The two families do not meet, so both take the base port. |
 
-One port number for both families is not a defect by itself. The description
-carries a port for each family, and a reader connects to the one of its own
-family. The open question is what liblsl reports on those platforms.
+Linux was the one platform measured when this test was written. The test
+therefore held an accident of one platform as a rule of the protocol. This is
+the fifth defect of that class on this page, and the first one that a test
+caught before a recording did.
 
-A person with either platform can answer it. Build liblsl there, open one
-outlet, and read `v4data_port` and `v6data_port` from the description. Two
-different numbers say that liblsl sets `IPV6_V6ONLY` or scans differently, and
-this library must match. One number says that liblsl does what this library
-does, and the assertion is wrong.
+macOS holds no measurement of this field. Both platforms take the same default,
+and the source above explains both, so the reason to expect a difference is
+gone.
 
 ### The multicast port of a second outlet, on macOS
 
@@ -172,9 +183,8 @@ It waits five seconds for one sample over loopback. A run that fails reports no
 sample, and not a wrong one, so the evidence points at the time limit and not
 at the protocol.
 
-The port of each family is the second open case. The section above gives it.
-
-No measurement covers Windows. Use Linux for a measured result.
+One measurement covers Windows, and the section above gives it. It reads one
+field of one outlet. Use Linux for a measured result.
 
 ## What is not measured
 

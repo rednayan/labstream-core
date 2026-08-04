@@ -5,14 +5,19 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `an_outlet_reports_a_port_for_each_protocol` asserted that the IPv4 data port
+  and the IPv6 data port differ. That assertion was wrong, and it failed on
+  macOS and on Windows. A measurement of liblsl on Windows read 16572 for both
+  fields, so one number for both families is what liblsl gives. The library
+  already matched. The assertion has gone, and the test keeps the check that
+  each family reports a port.
+
 ### Changed
 
-- `docs/conformance.md` gives a third open case.
-  `an_outlet_reports_a_port_for_each_protocol` asserts that the IPv4 data port
-  and the IPv6 data port differ. macOS and Windows can give one number for
-  both, because `bind_udp_in_range` does not set `IPV6_V6ONLY` and those
-  platforms default to one family for each socket. The page names the
-  measurement that says whether the library or the test is wrong.
+- `docs/conformance.md` records the Windows measurement of the two port
+  fields. Windows now carries one measured field. macOS carries none.
 
 ## [0.1.0] - 2026-08-03
 

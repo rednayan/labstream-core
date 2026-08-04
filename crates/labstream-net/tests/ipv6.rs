@@ -23,8 +23,23 @@ fn an_outlet_reports_a_port_for_each_protocol() {
     assert_ne!(info.v4service_port, 0, "no IPv4 service port");
     assert_ne!(info.v6data_port, 0, "no IPv6 data port");
     assert_ne!(info.v6service_port, 0, "no IPv6 service port");
-    // The two families bind their own sockets, so the ports differ.
-    assert_ne!(info.v4data_port, info.v6data_port);
+    // This test asserted that the two data ports differ. That assertion was
+    // wrong. It held on Linux and failed on macOS and on Windows.
+    //
+    // liblsl opens one acceptor for each family and scans the port range for
+    // each one (`src/tcp_server.cpp:333-353`). It never sets `IPV6_V6ONLY`, so
+    // the default of the platform decides whether the second bind meets the
+    // first. Linux gives a dual stack socket, the second bind meets the first,
+    // and the scan moves to the next port. macOS and Windows give one family
+    // for each socket, and both take the base port.
+    //
+    // A measurement on Windows read liblsl through pylsl. It reported 16572
+    // for `v4data_port` and 16572 for `v6data_port`. One number for both
+    // families is therefore what liblsl does, and this library matches it.
+    //
+    // The port of each family has to be present, and a reader connects to the
+    // port of its own family. Whether the two numbers differ is a property of
+    // the platform and not a rule of the protocol.
     println!(
         "v4 data {} service {}, v6 data {} service {}",
         info.v4data_port, info.v4service_port, info.v6data_port, info.v6service_port
