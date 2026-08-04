@@ -78,7 +78,37 @@ jobs:
 
       # `--workspace` finds the order itself. `labstream-capi` sets
       # `publish = false`, so it stays out.
-      - run: cargo publish --workspace --token ${{ steps.auth.outputs.token }}
+      #
+      # `cargo publish` stops when crates.io already holds a version, and a
+      # release that stops here writes no GitHub release. This step asks
+      # crates.io first, so a second run of one release finishes what the first
+      # one began. crates.io answers 403 to a request that carries no user
+      # agent, so this sends one.
+      - name: Publish, unless crates.io holds this version
+        run: |
+          version=$(python3 -c \
+            "import tomllib; print(tomllib.load(open('Cargo.toml','rb'))['workspace']['package']['version'])")
+          ua="labstream-release-workflow (github.com/rednayan/labstream-core)"
+          held=0
+          for crate in labstream-wire labstream-time labstream-proto labstream-net labstream-core; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -A "$ua" \
+              "https://crates.io/api/v1/crates/$crate/$version")
+            case "$code" in
+              200) held=$((held + 1)) ;;
+              404) ;;
+              *) echo "::error::crates.io answered $code for $crate, and this step reads 200 or 404"; exit 1 ;;
+            esac
+          done
+          if [ "$held" -eq 5 ]; then
+            echo "crates.io holds all five crates at $version already. Nothing to publish."
+            exit 0
+          fi
+          if [ "$held" -ne 0 ]; then
+            echo "::error::crates.io holds $held of the five crates at $version."
+            echo "::error::A publish of the rest needs a person. `cargo publish --workspace` would stop."
+            exit 1
+          fi
+          cargo publish --workspace --token ${{ steps.auth.outputs.token }}
 
   binaries:
     name: Build liblsl for ${{ matrix.os }}
