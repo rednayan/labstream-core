@@ -5,6 +5,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-04
+
+The first release on crates.io. `labstream-core` is the crate to name, and it
+carries the other four.
+
 ### Added
 
 - `labstream-core`. This crate holds no code. It names `labstream-wire`,
@@ -31,8 +36,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   fields. Windows now carries one measured field. macOS carries none.
 - Each crate takes its dependency on another crate here from
   `[workspace.dependencies]`, which holds a version as well as a path.
-  `cargo publish` refuses a path with no version. The library is still not on
-  crates.io, and `docs/versioning.md` gives the steps that put it there.
+  `cargo publish` refuses a path with no version.
+- `docs/versioning.md` gives the publish order, and it says why
+  `labstream-capi` is not in that order. That crate builds a `cdylib` alone,
+  which a Rust program cannot link.
 
 ## [0.1.0] - 2026-08-03
 
@@ -89,5 +96,6 @@ Layer.
 - Protocol 1.00. That version carries every sample in a Boost archive. An
   inlet that asks for 1.00 gets a refusal, not a wrong read.
 
-[Unreleased]: https://github.com/rednayan/labstream-core/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/rednayan/labstream-core/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/rednayan/labstream-core/releases/tag/v0.1.1
 [0.1.0]: https://github.com/rednayan/labstream-core/releases/tag/v0.1.0

@@ -10,7 +10,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "labstream-capi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "labstream-net",
  "labstream-time",
@@ -20,7 +20,7 @@ dependencies = [
 
 [[package]]
 name = "labstream-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "labstream-net",
  "labstream-proto",
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "labstream-net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "labstream-proto",
  "labstream-time",
@@ -41,7 +41,7 @@ dependencies = [
 
 [[package]]
 name = "labstream-proto"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "labstream-wire",
  "serde_json",
@@ -49,14 +49,14 @@ dependencies = [
 
 [[package]]
 name = "labstream-time"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
 name = "labstream-wire"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde_json",
 ]
