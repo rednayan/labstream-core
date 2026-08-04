@@ -5,6 +5,20 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `.github/workflows/release.yml`. A push of a tag that starts with `v` checks
+  the tag against the manifest and the changelog, runs the tests, publishes to
+  crates.io, builds `labstream-capi` for Linux, macOS, and Windows, and writes
+  the GitHub release with the three libraries attached.
+- `publish = false` in `labstream-capi`. That crate builds a `cdylib` alone,
+  which a Rust program cannot link, so no command can send it to crates.io.
+
+### Changed
+
+- `docs/versioning.md` gives the workflow, the one setting that crates.io needs
+  for it, and the way to make a person approve each publish.
+
 ## [0.1.1] - 2026-08-04
 
 The first release on crates.io. `labstream-core` is the crate to name, and it

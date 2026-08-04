@@ -2,6 +2,11 @@
 name = "labstream-capi"
 version.workspace = true
 description = "The C ABI of LSL. The only crate here that holds raw pointers."
+# This crate builds a `cdylib` alone, which a Rust program cannot link. A
+# reader on crates.io could take the dependency and reach no symbol, so it does
+# not go there. `docs/versioning.md` gives the reason and the way to give a C
+# program the built library.
+publish = false
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true

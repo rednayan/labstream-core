@@ -113,6 +113,9 @@ Write the GitHub release last, because it is the one you can correct.
 
 ## How to make a release
 
+`.github/workflows/release.yml` makes the release. A push of a tag starts it.
+You prepare the commit, and the workflow does the three places.
+
 1. Run `cargo test --workspace`. Every test must pass.
 2. Run `cargo fmt --all --check` and `cargo clippy --workspace --all-targets`.
 3. Move the `CHANGELOG.md` entries from `[Unreleased]` to the new version.
@@ -125,27 +128,80 @@ Write the GitHub release last, because it is the one you can correct.
 8. Commit the change. Use the subject `Release vX.Y.Z`.
 9. Tag the commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`.
 10. Push the commit and the tag with `git push origin main --follow-tags`.
-11. Publish to crates.io. The next section gives the order.
-12. Write the GitHub release from the `CHANGELOG.md` entry:
 
-```sh
-gh release create vX.Y.Z --title "vX.Y.Z" --notes-file notes.md --verify-tag
-```
-
-Step 11 cannot be undone. Read the version number twice before it.
+Step 10 starts the workflow. Nothing else is necessary.
 
 If the release changes a protocol rule, run the conformance workbench first.
 Record the result in `docs/conformance.md`.
 
-## How to publish to crates.io
+### What the workflow does
 
-The library is not on crates.io. These steps put it there.
+| Job | What it does |
+|---|---|
+| `verify` | Checks the tag against the manifest and the changelog, then runs the format, the lint, and the tests on Linux |
+| `publish` | `cargo publish --workspace` to crates.io |
+| `binaries` | Builds `labstream-capi` on Linux, macOS, and Windows |
+| `release` | Writes the GitHub release, with the notes from `CHANGELOG.md` and the three libraries attached |
+
+`verify` runs first, and every later job waits for it. Two of its checks exist
+because crates.io keeps a mistake for ever:
+
+- The tag must match `[workspace.package]`. A tag that does not match publishes
+  one version under the name of another.
+- `CHANGELOG.md` must hold a section for the version.
+
+`verify` runs the tests on Linux alone. That is the platform which carries a
+measurement against liblsl. `docs/conformance.md` gives what each platform
+does, and it names the open cases on macOS and Windows.
+
+### What the workflow needs once
+
+crates.io must hold a trusted publisher for each of the five crates. That
+setting lets this repository publish with no stored token, and a token that
+lasts 30 minutes does the upload.
+
+For each of `labstream-wire`, `labstream-proto`, `labstream-time`,
+`labstream-net`, and `labstream-core`, open the crate on crates.io, then
+Settings, then Trusted Publishing, and add:
+
+| Field | Value |
+|---|---|
+| Repository owner | `rednayan` |
+| Repository name | `labstream-core` |
+| Workflow filename | `release.yml` |
+
+Without that setting the `publish` job stops and nothing reaches crates.io.
+The `verify` job still reports whether the release is sound.
+
+### If you want a person to approve each publish
+
+The `publish` job can wait for an approval. In the repository settings make an
+environment named `crates-io`, add yourself as a reviewer, and add this line to
+the `publish` job:
+
+```yaml
+    environment: crates-io
+```
+
+A release then stops until a person approves it. Nothing else changes.
+
+## How to publish to crates.io by hand
+
+The workflow publishes. These steps are for a day when it cannot.
 
 A published version is permanent. crates.io can yank a version, which stops a
 new project from taking it, and it deletes nothing. Read the version number
 twice before this step.
 
-Publish in this order. Each crate needs the crate above it:
+```sh
+cargo publish --workspace
+```
+
+That finds the order itself. `labstream-capi` sets `publish = false`, so it
+stays out.
+
+If a crate must go alone, this is the order. Each crate needs the crate above
+it:
 
 1. `cargo publish -p labstream-wire`
 2. `cargo publish -p labstream-time`
@@ -175,5 +231,7 @@ Give the built library to a C program instead. Attach `liblsl.so` and
 gh release upload vX.Y.Z target/release/liblsl.so
 ```
 
-Publish `labstream-capi` only to hold the name. If you do, say in the
-description that a Rust program cannot use it.
+`labstream-capi` sets `publish = false`, so `cargo publish --workspace` leaves
+it out and a person cannot publish it by mistake. The release workflow builds
+it for Linux, macOS, and Windows, and attaches the three libraries to the
+GitHub release. A C program takes one of those and needs no toolchain.

@@ -1,0 +1,153 @@
+name: Release
+
+# A push of a tag that starts with `v` makes the whole release: it checks the
+# tag against the manifest, publishes to crates.io, builds the C library for
+# three platforms, and writes the GitHub release.
+#
+# `cargo publish` cannot be undone. The `verify` job therefore runs first, and
+# every later job waits for it.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  # `id-token` lets crates.io trust this workflow without a stored token.
+  # `contents` lets the last job write the release.
+  id-token: write
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    name: Verify the tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      # A tag that does not match the manifest would publish one version under
+      # the name of another. crates.io keeps that mistake for ever.
+      - name: The tag must match the manifest
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(python3 -c \
+            "import tomllib; print(tomllib.load(open('Cargo.toml','rb'))['workspace']['package']['version'])")
+          echo "tag $tag, manifest $manifest"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::the tag says $tag and the manifest says $manifest"
+            exit 1
+          fi
+
+      # A release with no entry tells a reader nothing about what changed.
+      - name: The changelog must hold the version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          if ! grep -q "^## \[$tag\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md holds no section for $tag"
+            exit 1
+          fi
+
+      # Linux is the platform that carries a measurement against liblsl.
+      # `docs/conformance.md` gives what each platform does.
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets
+        env:
+          RUSTFLAGS: -D warnings
+      - run: cargo test --workspace
+
+  publish:
+    name: Publish to crates.io
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # This exchanges the token of this workflow for one that lasts 30
+      # minutes. crates.io must hold a trusted publisher for each crate.
+      # `docs/versioning.md` gives that step.
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
+      # `--workspace` finds the order itself. `labstream-capi` sets
+      # `publish = false`, so it stays out.
+      - run: cargo publish --workspace --token ${{ steps.auth.outputs.token }}
+
+  binaries:
+    name: Build liblsl for ${{ matrix.os }}
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            built: liblsl.so
+            asset: liblsl-x86_64-linux.so
+          - os: macos-latest
+            built: liblsl.dylib
+            asset: liblsl-aarch64-macos.dylib
+          - os: windows-latest
+            built: lsl.dll
+            asset: lsl-x86_64-windows.dll
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # crates.io carries source and not a binary. A C program needs the built
+      # library, so the release carries one for each platform.
+      - run: cargo build -p labstream-capi --release
+      - name: Name the file for the platform
+        shell: bash
+        run: cp "target/release/${{ matrix.built }}" "${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    name: Write the GitHub release
+    needs: [publish, binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      # The notes are the section of CHANGELOG.md for this version. One text
+      # then holds the release, and no person writes it twice.
+      - name: Take the notes from the changelog
+        run: |
+          python3 - "$GITHUB_REF_NAME" <<'EOF' > notes.md
+          import re, sys
+          tag = sys.argv[1].lstrip("v")
+          text = open("CHANGELOG.md").read()
+          start = text.index(f"## [{tag}]")
+          body = text[start:].split("\n", 1)[1]
+          end = re.search(r"^## \[", body, re.M)
+          print((body[: end.start()] if end else body).strip())
+          print("\n## Install\n\n```sh\ncargo add labstream-core\n```\n")
+          print("The C library for each platform is below. crates.io carries")
+          print("source and not a binary, so `labstream-capi` is not there.")
+          EOF
+
+      - name: Write the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            --verify-tag \
+            assets/*
