@@ -94,20 +94,45 @@ produced, so a reader can decide whether the defect touched their data.
 
 `CONTRIBUTING.md` explains when a change needs a conformance run.
 
+## Three places hold a release
+
+A release lives in three places. Nothing joins them. Each one takes its own
+command, and one of them cannot be undone.
+
+| Place | What puts it there | Can you undo it |
+|---|---|---|
+| A git tag | `git push --follow-tags` | yes, and a person who fetched keeps the old one |
+| crates.io | `cargo publish` | no. A yank hides a version and deletes nothing |
+| A GitHub release | `gh release create` | yes. Edit or delete it at any time |
+
+A tag does not publish to crates.io. A publish does not make a GitHub release.
+A GitHub release does not publish anything.
+
+Make the tag first, so crates.io and the tag hold the same code. Publish next.
+Write the GitHub release last, because it is the one you can correct.
+
 ## How to make a release
 
 1. Run `cargo test --workspace`. Every test must pass.
 2. Run `cargo fmt --all --check` and `cargo clippy --workspace --all-targets`.
 3. Move the `CHANGELOG.md` entries from `[Unreleased]` to the new version.
 4. Write the release date in the heading, as `YYYY-MM-DD`.
-5. Set `version` in `[workspace.package]` of the root `Cargo.toml`. Set the
+5. Add the link references at the end of `CHANGELOG.md`.
+6. Set `version` in `[workspace.package]` of the root `Cargo.toml`. Set the
    same number in each entry of `[workspace.dependencies]` below it. A crate
    that keeps the old number there asks crates.io for the old release.
-6. Run `cargo build --workspace` to update `Cargo.lock`.
-7. Commit the change. Use the subject `Release vX.Y.Z`.
-8. Tag the commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`.
-9. Push the commit and the tag with `git push origin main --follow-tags`.
-10. Add the link references at the end of `CHANGELOG.md`.
+7. Run `cargo build --workspace` to update `Cargo.lock`.
+8. Commit the change. Use the subject `Release vX.Y.Z`.
+9. Tag the commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`.
+10. Push the commit and the tag with `git push origin main --follow-tags`.
+11. Publish to crates.io. The next section gives the order.
+12. Write the GitHub release from the `CHANGELOG.md` entry:
+
+```sh
+gh release create vX.Y.Z --title "vX.Y.Z" --notes-file notes.md --verify-tag
+```
+
+Step 11 cannot be undone. Read the version number twice before it.
 
 If the release changes a protocol rule, run the conformance workbench first.
 Record the result in `docs/conformance.md`.
