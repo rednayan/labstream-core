@@ -18,6 +18,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `docs/versioning.md` gives the workflow, the one setting that crates.io needs
   for it, and the way to make a person approve each publish.
+- `README.md` names `labstream` on crates.io and its repository `labstream-rs`.
+  The page said that the API crate was not published.
 
 ## [0.1.1] - 2026-08-04
 

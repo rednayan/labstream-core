@@ -44,9 +44,16 @@ unit test with a byte slice. Only the tests of `labstream-net` need a network.
 
 ## Add the library to a Rust program
 
-Most programs want `labstream` and not these crates. That crate is the API: it
-holds the block reads, the channel list, the query builder, and the error type.
-It calls the crates here. `labstream` is not published yet.
+Most programs want [`labstream`](https://crates.io/crates/labstream) and not
+these crates. That crate is the API: it holds the block reads, the channel
+list, the query builder, and the error type. It calls the crates here.
+
+```sh
+cargo add labstream
+```
+
+Its repository is
+[`labstream-rs`](https://github.com/rednayan/labstream-rs).
 
 Use the crates here directly when a program needs a protocol detail that the API
 does not give.
