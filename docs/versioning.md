@@ -95,7 +95,9 @@ produced, so a reader can decide whether the defect touched their data.
 2. Run `cargo fmt --all --check` and `cargo clippy --workspace --all-targets`.
 3. Move the `CHANGELOG.md` entries from `[Unreleased]` to the new version.
 4. Write the release date in the heading, as `YYYY-MM-DD`.
-5. Set `version` in `[workspace.package]` of the root `Cargo.toml`.
+5. Set `version` in `[workspace.package]` of the root `Cargo.toml`. Set the
+   same number in each entry of `[workspace.dependencies]` below it. A crate
+   that keeps the old number there asks crates.io for the old release.
 6. Run `cargo build --workspace` to update `Cargo.lock`.
 7. Commit the change. Use the subject `Release vX.Y.Z`.
 8. Tag the commit with `git tag -a vX.Y.Z -m "vX.Y.Z"`.
@@ -104,3 +106,26 @@ produced, so a reader can decide whether the defect touched their data.
 
 If the release changes a protocol rule, run the conformance workbench first.
 Record the result in `docs/conformance.md`.
+
+## How to publish to crates.io
+
+The library is not on crates.io. These steps put it there.
+
+A published version is permanent. crates.io can yank a version, which stops a
+new project from taking it, and it deletes nothing. Read the version number
+twice before this step.
+
+Publish in this order. Each crate needs the crate above it:
+
+1. `cargo publish -p labstream-wire`
+2. `cargo publish -p labstream-time`
+3. `cargo publish -p labstream-proto`
+4. `cargo publish -p labstream-net`
+5. `cargo publish -p labstream-capi`
+
+crates.io needs a moment to hold a new crate in its index. If step 3 reports
+that it cannot find `labstream-wire`, wait and run it again.
+
+`labstream-capi` builds one shared library for a C program. It gives a Rust
+program nothing, because it holds no `rlib`. Publish it for the record of the
+version, and name `labstream-net` in a Rust program.

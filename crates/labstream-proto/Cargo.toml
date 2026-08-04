@@ -12,7 +12,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-labstream-wire = { path = "../labstream-wire" }
+labstream-wire.workspace = true
 
 [dev-dependencies]
 serde_json = "1"

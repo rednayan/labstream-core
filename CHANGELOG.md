@@ -18,6 +18,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `docs/conformance.md` records the Windows measurement of the two port
   fields. Windows now carries one measured field. macOS carries none.
+- Each crate takes its dependency on another crate here from
+  `[workspace.dependencies]`, which holds a version as well as a path.
+  `cargo publish` refuses a path with no version. The library is still not on
+  crates.io, and `docs/versioning.md` gives the steps that put it there.
 
 ## [0.1.0] - 2026-08-03
 

@@ -19,6 +19,16 @@ authors = ["rednayan"]
 keywords = ["lsl", "labstreaminglayer", "eeg", "neuroscience", "streaming"]
 categories = ["network-programming", "science"]
 
+# Each crate here needs a version as well as a path. A path alone builds this
+# workspace, and `cargo publish` refuses it, because a reader of the published
+# crate has no such path. `docs/versioning.md` gives the release steps, and one
+# of them is to raise these numbers with the version above.
+[workspace.dependencies]
+labstream-wire = { path = "crates/labstream-wire", version = "0.1.0" }
+labstream-proto = { path = "crates/labstream-proto", version = "0.1.0" }
+labstream-time = { path = "crates/labstream-time", version = "0.1.0" }
+labstream-net = { path = "crates/labstream-net", version = "0.1.0" }
+
 # The golden tests read several thousand recorded vectors. At opt-level 0 the
 # decoder makes the suite slow enough to discourage a person from running it.
 [profile.test]

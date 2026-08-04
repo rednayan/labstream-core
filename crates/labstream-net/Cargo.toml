@@ -12,9 +12,9 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-labstream-wire = { path = "../labstream-wire" }
-labstream-proto = { path = "../labstream-proto" }
-labstream-time = { path = "../labstream-time" }
+labstream-wire.workspace = true
+labstream-proto.workspace = true
+labstream-time.workspace = true
 # Only for one socket option that the standard library does not expose.
 # `src/udp_server.cpp:60` sets it, and a second outlet needs it.
 socket2 = "0.5"

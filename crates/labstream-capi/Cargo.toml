@@ -18,7 +18,7 @@ name = "lsl"
 crate-type = ["cdylib"]
 
 [dependencies]
-labstream-wire = { path = "../labstream-wire" }
-labstream-net = { path = "../labstream-net" }
-labstream-time = { path = "../labstream-time" }
+labstream-wire.workspace = true
+labstream-net.workspace = true
+labstream-time.workspace = true
 libc = "0.2"
