@@ -89,13 +89,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            built: liblsl.so
             asset: liblsl-x86_64-linux.so
           - os: macos-latest
-            built: liblsl.dylib
             asset: liblsl-aarch64-macos.dylib
           - os: windows-latest
-            built: lsl.dll
             asset: lsl-x86_64-windows.dll
     steps:
       - uses: actions/checkout@v4
@@ -104,10 +101,28 @@ jobs:
 
       # crates.io carries source and not a binary. A C program needs the built
       # library, so the release carries one for each platform.
-      - run: cargo build -p labstream-capi --release
+      #
+      # Each platform gives the file its own name: `liblsl.so`, `liblsl.dylib`,
+      # and `lsl.dll`. Cargo reports the name it wrote, so this step reads that
+      # report and copies no name that a person guessed.
+      - name: Build the C library
+        shell: bash
+        run: cargo build -p labstream-capi --release --message-format=json > build.json
       - name: Name the file for the platform
         shell: bash
-        run: cp "target/release/${{ matrix.built }}" "${{ matrix.asset }}"
+        run: |
+          python3 - "${{ matrix.asset }}" <<'EOF'
+          import json, shutil, sys
+          for line in open("build.json"):
+              m = json.loads(line)
+              if m.get("reason") == "compiler-artifact" and m.get("target", {}).get("name") == "lsl":
+                  for f in m.get("filenames", []):
+                      if f.endswith((".so", ".dylib", ".dll")):
+                          print(f"{f} -> {sys.argv[1]}")
+                          shutil.copy(f, sys.argv[1])
+                          raise SystemExit(0)
+          raise SystemExit("cargo reported no shared library for labstream-capi")
+          EOF
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
