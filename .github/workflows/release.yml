@@ -6,10 +6,15 @@ name: Release
 #
 # `cargo publish` cannot be undone. The `verify` job therefore runs first, and
 # every later job waits for it.
+#
+# A run from the Actions tab builds the C library and stops. It publishes
+# nothing and it writes no release, so a person can see the three platform
+# builds work before a real release depends on them.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   # `id-token` lets crates.io trust this workflow without a stored token.
@@ -34,6 +39,7 @@ jobs:
       # A tag that does not match the manifest would publish one version under
       # the name of another. crates.io keeps that mistake for ever.
       - name: The tag must match the manifest
+        if: github.event_name == 'push'
         run: |
           tag="${GITHUB_REF_NAME#v}"
           manifest=$(python3 -c \
@@ -46,6 +52,7 @@ jobs:
 
       # A release with no entry tells a reader nothing about what changed.
       - name: The changelog must hold the version
+        if: github.event_name == 'push'
         run: |
           tag="${GITHUB_REF_NAME#v}"
           if ! grep -q "^## \[$tag\]" CHANGELOG.md; then
@@ -64,6 +71,9 @@ jobs:
   publish:
     name: Publish to crates.io
     needs: verify
+    # A run from the Actions tab must never publish. crates.io keeps a version
+    # for ever, and a person who wanted to see the builds did not ask for one.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +115,7 @@ jobs:
           fi
           if [ "$held" -ne 0 ]; then
             echo "::error::crates.io holds $held of the five crates at $version."
-            echo "::error::A publish of the rest needs a person. `cargo publish --workspace` would stop."
+            echo "::error::A publish of the rest needs a person. cargo publish --workspace would stop."
             exit 1
           fi
           cargo publish --workspace --token ${{ steps.auth.outputs.token }}
@@ -162,6 +172,9 @@ jobs:
   release:
     name: Write the GitHub release
     needs: [publish, binaries]
+    # `needs` holds `publish`, which a run from the Actions tab skips, so this
+    # job skips with it. The condition says so where a reader looks.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
