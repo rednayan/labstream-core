@@ -28,11 +28,16 @@ full result.
 
 | Crate | What it holds | Touches the operating system |
 |---|---|---|
+| `labstream-core` | the four crates below, as one dependency | through `labstream-net` |
 | `labstream-wire` | the sample codec | no |
 | `labstream-proto` | the handshake, discovery, and time sync | no |
 | `labstream-time` | the timestamp filter, bit exact | no |
 | `labstream-net` | sockets, outlet, inlet, resolver, configuration, XPath | yes |
 | `labstream-capi` | the C ABI, built as `liblsl.so` | yes |
+
+`labstream-core` holds no code. It names the four crates below it, so a program
+takes one dependency. `labstream-capi` is not one of them, because it builds a
+shared library for a C program and gives a Rust program nothing.
 
 Only `labstream-net` touches the operating system. A protocol rule therefore gets a
 unit test with a byte slice. Only the tests of `labstream-net` need a network.
@@ -50,7 +55,30 @@ This library is not on crates.io yet. Add it from git:
 
 ```toml
 [dependencies]
-labstream-net = { git = "https://github.com/rednayan/labstream-core" }
+labstream-core = { git = "https://github.com/rednayan/labstream-core" }
+```
+
+That one line gives every part:
+
+```rust
+use labstream_core::net::{clock, Outlet, StreamInfo};
+use labstream_core::wire::{Format, Sample, Value};
+```
+
+A program that opens no socket can drop the one crate that does:
+
+```toml
+[dependencies]
+labstream-core = { git = "...", default-features = false }
+```
+
+`labstream-wire`, `labstream-proto`, and `labstream-time` stay. Each one holds
+no input and no output, so it costs a program nothing.
+
+A program that wants one part alone can still name that part alone:
+
+```toml
+[dependencies]
 labstream-wire = { git = "https://github.com/rednayan/labstream-core" }
 ```
 

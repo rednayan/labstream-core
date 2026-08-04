@@ -50,6 +50,7 @@ Each crate has one job. Keep the boundaries:
 
 | Crate | Rule |
 |---|---|
+| `labstream-core` | no code. It names the four crates below it |
 | `labstream-wire` | no input and no output. Bytes in, bytes out |
 | `labstream-proto` | no input and no output. Bytes and events in, decisions out |
 | `labstream-time` | no input and no output. Numbers in, numbers out |

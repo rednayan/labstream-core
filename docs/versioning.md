@@ -22,13 +22,18 @@ library refuses protocol 1.00.
 
 ## What the version covers
 
-The version covers the public Rust API of these five crates:
+The version covers the public Rust API of these six crates:
 
+- `labstream-core`
 - `labstream-wire`
 - `labstream-proto`
 - `labstream-time`
 - `labstream-net`
 - `labstream-capi`
+
+`labstream-core` holds no code of its own. It names the four crates that carry
+the library. A change to what it names is a change to its API, and the table
+below gives the rule for one.
 
 A public item is an item that `cargo doc --workspace --no-deps` shows. If a
 change removes such an item, or changes its signature, that change is
@@ -121,7 +126,8 @@ Publish in this order. Each crate needs the crate above it:
 2. `cargo publish -p labstream-time`
 3. `cargo publish -p labstream-proto`
 4. `cargo publish -p labstream-net`
-5. `cargo publish -p labstream-capi`
+5. `cargo publish -p labstream-core`
+6. `cargo publish -p labstream-capi`
 
 crates.io needs a moment to hold a new crate in its index. If step 3 reports
 that it cannot find `labstream-wire`, wait and run it again.

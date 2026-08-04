@@ -4,6 +4,7 @@ members = [
     "crates/labstream-proto",
     "crates/labstream-time",
     "crates/labstream-net",
+    "crates/labstream-core",
     "crates/labstream-capi",
 ]
 resolver = "2"

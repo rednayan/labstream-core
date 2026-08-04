@@ -1,0 +1,27 @@
+[package]
+name = "labstream-core"
+version.workspace = true
+description = "The LSL core library: the codec, the protocol, the timestamp filter, and the sockets."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+# `net` is the one part that touches the operating system. A program that holds
+# no socket can drop it and keep the codec, the protocol, and the filter.
+default = ["net"]
+net = ["dep:labstream-net"]
+
+[dependencies]
+labstream-wire.workspace = true
+labstream-proto.workspace = true
+labstream-time.workspace = true
+labstream-net = { workspace = true, optional = true }
+
+[package.metadata.docs.rs]
+all-features = true

@@ -5,6 +5,17 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `labstream-core`. This crate holds no code. It names `labstream-wire`,
+  `labstream-proto`, `labstream-time`, and `labstream-net`, so a program takes
+  one dependency and reaches every part through `labstream_core::wire`,
+  `::proto`, `::time`, and `::net`. It does not name `labstream-capi`, which
+  builds a shared library for a C program.
+- The `net` feature of `labstream-core`, on by default. A program that opens no
+  socket can turn it off and keep the three crates that hold no input and no
+  output.
+
 ### Fixed
 
 - `an_outlet_reports_a_port_for_each_protocol` asserted that the IPv4 data port
