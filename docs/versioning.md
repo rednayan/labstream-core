@@ -127,11 +127,28 @@ Publish in this order. Each crate needs the crate above it:
 3. `cargo publish -p labstream-proto`
 4. `cargo publish -p labstream-net`
 5. `cargo publish -p labstream-core`
-6. `cargo publish -p labstream-capi`
 
 crates.io needs a moment to hold a new crate in its index. If step 3 reports
 that it cannot find `labstream-wire`, wait and run it again.
 
-`labstream-capi` builds one shared library for a C program. It gives a Rust
-program nothing, because it holds no `rlib`. Publish it for the record of the
-version, and name `labstream-net` in a Rust program.
+### Why `labstream-capi` is not in that list
+
+`labstream-capi` builds one shared library, and its only target is a `cdylib`.
+A `cdylib` holds no `rlib`, so a Rust program cannot link it. Cargo takes the
+dependency and builds the crate, and then the first use of it stops with
+"unresolved module or unlinked crate".
+
+crates.io carries source and not a binary. A C program needs a built
+`liblsl.so` or `lsl.dll`, and crates.io gives neither. So a publication of this
+crate reaches no reader who can use it, and it can send a Rust reader to a
+crate that does not link.
+
+Give the built library to a C program instead. Attach `liblsl.so` and
+`lsl.dll` to the GitHub release, and a reader needs no toolchain:
+
+```sh
+gh release upload vX.Y.Z target/release/liblsl.so
+```
+
+Publish `labstream-capi` only to hold the name. If you do, say in the
+description that a Rust program cannot use it.
