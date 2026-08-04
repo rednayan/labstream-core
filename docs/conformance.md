@@ -16,7 +16,7 @@ libraries agree.
 
 | Evidence | Measure |
 |---|---|
-| Tests in this repository | 226 |
+| Tests in this repository | 232 |
 | C symbols exported | 165 of 165, none a stub |
 | Golden vectors, transcripts, time sequences | 42, 22, and 10 with 96,008 samples |
 | Interop cells | 28 default, 16 blocking, 12 IPv6, and more |
@@ -96,7 +96,7 @@ platforms. The three results are not the same.
 
 | Platform | Builds | Tests | Compared against liblsl |
 |---|---|---|---|
-| Linux | yes | 231 pass | the full workbench |
+| Linux | yes | 232 pass | the full workbench |
 | macOS | yes | 1 open case | no |
 | Windows | yes | 1 open case | one field |
 

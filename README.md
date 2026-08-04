@@ -8,9 +8,9 @@ LabRecorder, and a third-party recorder each do so.
 
 ## Status
 
-This is version 0.1.0. The protocol work is complete and measured. These crates
-can change before version 1.0. liblsl fixes the C ABI, so the C ABI will not
-change. `docs/versioning.md` gives the full rule.
+This is version 0.1.1, and it is on crates.io. The protocol work is complete
+and measured. These crates can change before version 1.0. liblsl fixes the C
+ABI, so the C ABI will not change. `docs/versioning.md` gives the full rule.
 
 | Measure | Result |
 |---|---|
@@ -18,7 +18,7 @@ change. `docs/versioning.md` gives the full rule.
 | Example programs of liblsl that link and agree | 21 of 21 |
 | XPath queries answered as the oracle answers them | 42 of 42 |
 | Longest recording | 7.81 hours, 8.4 million samples, no loss |
-| Tests in this repository | 226 |
+| Tests in this repository | 232 |
 
 A separate conformance workbench made each measurement against a pinned build
 of liblsl at commit `e651023c`. `docs/conformance.md` gives the method and the
@@ -51,11 +51,8 @@ It calls the crates here. `labstream` is not published yet.
 Use the crates here directly when a program needs a protocol detail that the API
 does not give.
 
-This library is not on crates.io yet. Add it from git:
-
-```toml
-[dependencies]
-labstream-core = { git = "https://github.com/rednayan/labstream-core" }
+```sh
+cargo add labstream-core
 ```
 
 That one line gives every part:
@@ -69,7 +66,7 @@ A program that opens no socket can drop the one crate that does:
 
 ```toml
 [dependencies]
-labstream-core = { git = "...", default-features = false }
+labstream-core = { version = "0.1", default-features = false }
 ```
 
 `labstream-wire`, `labstream-proto`, and `labstream-time` stay. Each one holds
@@ -77,16 +74,18 @@ no input and no output, so it costs a program nothing.
 
 A program that wants one part alone can still name that part alone:
 
-```toml
-[dependencies]
-labstream-wire = { git = "https://github.com/rednayan/labstream-core" }
+```sh
+cargo add labstream-wire
 ```
+
+`labstream-capi` is not on crates.io. It builds a shared library for a C
+program, and a Rust program cannot link it. Build it from this repository.
 
 ### Send samples
 
 ```rust
-use labstream_net::{clock, Outlet, StreamInfo};
-use labstream_wire::{Format, Sample, Value};
+use labstream_core::net::{clock, Outlet, StreamInfo};
+use labstream_core::wire::{Format, Sample, Value};
 use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
@@ -108,7 +107,7 @@ fn main() -> std::io::Result<()> {
 ### Receive samples
 
 ```rust
-use labstream_net::{resolve, Inlet};
+use labstream_core::net::{resolve, Inlet};
 use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
@@ -157,7 +156,7 @@ cargo test --workspace
 ```
 
 The tests need no network hardware and no C++ toolchain. The tests of `labstream-net`
-bind loopback sockets. All 226 tests run in about 10 seconds.
+bind loopback sockets. All 232 tests run in about 10 seconds.
 
 Those numbers come from Linux, which is the platform that carries a
 measurement. macOS and Windows each hold one open test.
