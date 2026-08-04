@@ -17,7 +17,7 @@ labstream-proto.workspace = true
 labstream-time.workspace = true
 # Only for one socket option that the standard library does not expose.
 # `src/udp_server.cpp:60` sets it, and a second outlet needs it.
-socket2 = "0.5"
+socket2 = "0.6"
 
 # Only for `clock_gettime`, which gives the clock that liblsl reads. Windows
 # has no such function. `clock()` reads the performance counter there, through
